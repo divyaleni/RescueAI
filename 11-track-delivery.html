@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RescueAI — 11 · Track Delivery</title>
+<link rel="stylesheet" href="style.css">
+<script src="access.js"></script>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+    <div class="content page-pad">
+
+      <div class="brand-row">
+        <a href="04-home.html" class="back-btn">←</a>
+        <div class="brand" style="font-size:16px;">Track Mission</div>
+        <div class="avatar"></div>
+      </div>
+
+      <div class="tracking-status-bar" id="trackStatusBar">🚗 Grocery Surplus Recovery — In Progress</div>
+
+      <div class="map-box" style="margin-bottom:16px;">
+        <div class="map-pin"></div>
+        <div class="map-pin-sm alt" style="top:28%; left:24%;"></div>
+        <div class="map-chip" id="trackMapChip">🚗 Daniel is 6 min away</div>
+      </div>
+
+      <div class="driver-card">
+        <div class="driver-avatar" id="trackDriverAvatar">D</div>
+        <div class="driver-info">
+          <div class="driver-name" id="trackDriverName">Daniel R.</div>
+          <div class="driver-sub" id="trackDriverSub">Volunteer · 4.8★ · Honda Civic</div>
+        </div>
+        <div class="driver-actions">
+          <a href="#" class="icon-btn">📞</a>
+          <a href="#" class="icon-btn">💬</a>
+        </div>
+      </div>
+
+      <div class="section-head"><h3>Mission Timeline</h3></div>
+
+      <div class="progress-track">
+        <div class="progress-step done">
+          <div class="step-dot">✓</div>
+          <div class="step-body">
+            <div class="step-title">Mission accepted</div>
+            <div class="step-time" id="trackAcceptedTime">6:02 PM · Daniel R.</div>
+          </div>
+        </div>
+        <div class="progress-step done">
+          <div class="step-dot">✓</div>
+          <div class="step-body">
+            <div class="step-title" id="trackArrivedTitle">Arrived at Whole Foods</div>
+            <div class="step-time">6:14 PM</div>
+          </div>
+        </div>
+        <div class="progress-step active">
+          <div class="step-dot">●</div>
+          <div class="step-body">
+            <div class="step-title" id="trackEnRouteTitle">En route to St. Jude Shelter</div>
+            <div class="step-time" id="trackEta">ETA 6:30 PM</div>
+          </div>
+        </div>
+        <div class="progress-step pending">
+          <div class="step-dot">4</div>
+          <div class="step-body">
+            <div class="step-title">Delivered &amp; confirmed</div>
+            <div class="step-time">Pending</div>
+          </div>
+        </div>
+      </div>
+
+      <a href="08-profile.html" style="text-decoration:none;">
+        <button class="btn-primary" style="width:100%;">Back to Profile</button>
+      </a>
+
+    </div>
+
+    <nav class="bottom-nav"></nav>
+  </div>
+</div>
+
+<script>
+
+/* =========================
+   PERSONALIZE FROM THE MISSION THE VOLUNTEER
+   JUST ACCEPTED ON 10-request-pickup.html
+========================== */
+
+const activeMission =
+    JSON.parse(localStorage.getItem("activeMission") || "null");
+
+if (activeMission) {
+
+    document.getElementById("trackStatusBar").textContent =
+        "🚗 " + activeMission.title + " — In Progress";
+
+    document.getElementById("trackMapChip").textContent =
+        "🚗 Heading to " + (activeMission.address || "pickup address");
+
+    const firstName = (activeMission.volunteerName || "Volunteer").split(" ")[0];
+    const initial = firstName.charAt(0).toUpperCase();
+
+    document.getElementById("trackDriverAvatar").textContent = initial;
+    document.getElementById("trackDriverName").textContent = activeMission.volunteerName || "Volunteer";
+    document.getElementById("trackDriverSub").textContent =
+        "Volunteer · " + (activeMission.weight || 0) + " kg · " + (activeMission.distance || 0) + " mi away";
+
+    document.getElementById("trackAcceptedTime").textContent =
+        "Just now · " + (activeMission.volunteerName || "Volunteer");
+
+    document.getElementById("trackArrivedTitle").textContent =
+        "Arrived at " + (activeMission.address || "pickup address");
+
+    document.getElementById("trackEnRouteTitle").textContent =
+        "En route to drop-off";
+
+    document.getElementById("trackEta").textContent =
+        "Pickup by " + (activeMission.pickupBy || "soon");
+
+}
+
+</script>
+
+</body>
+</html>

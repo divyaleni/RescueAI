@@ -1,0 +1,665 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RescueAI — 13 · NGO Request Food</title>
+
+<link rel="stylesheet" href="style.css">
+<script src="access.js"></script>
+</head>
+
+<body>
+
+<div class="phone">
+  <div class="screen">
+
+    <div class="content page-pad">
+
+      <!-- =========================
+           HEADER
+      ========================== -->
+
+      <div class="brand-row">
+
+        <a href="04-home.html" class="back-btn">←</a>
+
+        <div class="brand" style="font-size:16px;">
+          Request Food
+        </div>
+
+        <div class="avatar"></div>
+
+      </div>
+
+
+      <!-- =========================
+           STEP
+      ========================== -->
+
+      <span class="flow-step-hint">
+        STEP 2 OF 2 · WHAT DOES YOUR NGO NEED?
+      </span>
+
+
+      <!-- =========================
+           GREETING
+      ========================== -->
+
+      <h1 class="hero" id="ngoRequestGreeting">
+        Hello, NGO Partner 👋
+      </h1>
+
+      <p class="sub">
+        Tell our AI what your organization needs right now —
+        we'll match you with the closest verified donors instantly.
+      </p>
+
+
+      <!-- =========================
+           FOOD REQUEST FORM
+      ========================== -->
+
+      <form id="foodRequestForm">
+
+
+        <!-- FOOD CATEGORY -->
+
+        <div class="field">
+
+          <label>
+            Food Category Needed
+          </label>
+
+          <select id="reqCategory" required>
+
+            <option value="Prepared Meals">
+              Prepared Meals
+            </option>
+
+            <option value="Fresh Produce">
+              Fresh Produce
+            </option>
+
+            <option value="Bakery Items">
+              Bakery Items
+            </option>
+
+            <option value="Dairy">
+              Dairy
+            </option>
+
+            <option value="Canned Goods">
+              Canned Goods
+            </option>
+
+            <option value="Mixed / Any">
+              Mixed / Any
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- QUANTITY -->
+
+        <div class="field" style="position:relative;">
+
+          <label>
+            Quantity Needed
+          </label>
+
+          <input
+            type="number"
+            id="reqQuantity"
+            min="1"
+            placeholder="40"
+            required
+          >
+
+          <span class="unit-label">
+            People / meals
+          </span>
+
+        </div>
+
+
+        <!-- URGENCY -->
+
+        <div class="field">
+
+          <label>
+            Urgency Level
+          </label>
+
+          <div class="urgency-row" id="urgencyRow">
+
+            <div
+              class="urgency-chip"
+              data-urgency="low"
+            >
+              🟢 Low
+            </div>
+
+            <div
+              class="urgency-chip"
+              data-urgency="medium"
+            >
+              🟠 Medium
+            </div>
+
+            <div
+              class="urgency-chip"
+              data-urgency="high"
+            >
+              🔴 High
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- PICKUP WINDOW -->
+
+        <div class="field">
+
+          <label>
+            Preferred Pickup Window
+          </label>
+
+          <input
+            type="text"
+            id="reqWindow"
+            placeholder="e.g. Today, 4–6 PM"
+          >
+
+        </div>
+
+
+        <!-- NOTES -->
+
+        <div class="field">
+
+          <label>
+            Additional Notes (optional)
+          </label>
+
+          <textarea
+            id="reqNotes"
+            placeholder="Refrigerated storage available on-site. Loading dock at rear entrance."
+          ></textarea>
+
+        </div>
+
+
+        <!-- AI SCAN BAR -->
+
+        <div class="scan-bar">
+
+          <span class="scan-dot"></span>
+
+          AI ready to scan nearby donors within 8 miles...
+
+        </div>
+
+
+        <!-- SUBMIT BUTTON -->
+
+        <button
+          type="submit"
+          class="btn-primary"
+          style="width:100%;"
+          id="foodRequestBtn"
+        >
+          Find Matching Donors 🔍
+        </button>
+
+
+      </form>
+
+    </div>
+
+
+    <!-- =========================
+         BOTTOM NAVIGATION
+    ========================== -->
+
+    <nav class="bottom-nav"></nav>
+
+  </div>
+</div>
+
+
+
+<script>
+
+/* =====================================================
+   NGO PROFILE / USER INFORMATION
+===================================================== */
+
+const ngoProfile =
+    JSON.parse(
+        localStorage.getItem("ngoProfile") || "null"
+    );
+
+
+const rescueUser =
+    JSON.parse(
+        localStorage.getItem("rescueUser") || "null"
+    );
+
+let ngoSession = null;
+
+if (typeof rescueGetSession === "function") {
+
+    ngoSession = rescueGetSession();
+
+}
+
+
+const ngoDisplayName =
+
+    (ngoProfile && ngoProfile.orgName) ||
+
+    (rescueUser && rescueUser.name) ||
+
+    (ngoSession && ngoSession.name) ||
+
+    "NGO Partner";
+
+
+/* Display NGO name */
+
+document.getElementById(
+    "ngoRequestGreeting"
+).textContent =
+    "Hello, " + ngoDisplayName + " 👋";
+
+
+
+/* =====================================================
+   URGENCY CHIP SELECTION
+===================================================== */
+
+let selectedUrgency = null;
+
+
+document
+    .querySelectorAll(".urgency-chip")
+    .forEach(function (chip) {
+
+
+        chip.addEventListener(
+            "click",
+            function () {
+
+
+                /* Remove previous selection */
+
+                document
+                    .querySelectorAll(".urgency-chip")
+                    .forEach(function (c) {
+
+                        c.classList.remove("selected");
+
+                    });
+
+
+                /* Select current chip */
+
+                chip.classList.add("selected");
+
+
+                /* Store urgency */
+
+                selectedUrgency =
+                    chip.getAttribute("data-urgency");
+
+
+            }
+        );
+
+    });
+
+
+
+/* =====================================================
+   SUBMIT FOOD REQUEST
+===================================================== */
+
+document
+    .getElementById("foodRequestForm")
+    .addEventListener(
+        "submit",
+        submitFoodRequest
+    );
+
+
+async function submitFoodRequest(event) {
+
+
+    /* Stop normal form submission */
+
+    event.preventDefault();
+
+
+    /* =================================================
+       GET FORM VALUES
+    ================================================= */
+
+    const category =
+        document.getElementById(
+            "reqCategory"
+        ).value;
+
+
+    const quantity =
+        document.getElementById(
+            "reqQuantity"
+        ).value;
+
+
+    const pickupWindow =
+        document.getElementById(
+            "reqWindow"
+        ).value.trim();
+
+
+    const notes =
+        document.getElementById(
+            "reqNotes"
+        ).value.trim();
+
+
+
+    /* =================================================
+       VALIDATION
+    ================================================= */
+
+    if (
+        quantity === "" ||
+        Number(quantity) < 1
+    ) {
+
+        alert(
+            "Please enter how many people or meals you need food for."
+        );
+
+        return;
+
+    }
+
+
+    if (!selectedUrgency) {
+
+        alert(
+            "Please select an urgency level so the AI can prioritize your request."
+        );
+
+        return;
+
+    }
+
+
+
+    /* =================================================
+       CREATE REQUEST OBJECT
+    ================================================= */
+
+    const foodRequest = {
+
+        /* NGO name */
+
+        ngoName:
+            ngoDisplayName,
+
+
+        /* Food information */
+
+        foodType:
+            category,
+
+
+        category:
+            category,
+
+
+        quantity:
+            Number(quantity),
+
+
+        /* Request date */
+
+        requiredDate:
+            new Date()
+                .toISOString()
+                .split("T")[0],
+
+
+        /* Pickup window */
+
+        requiredTime:
+            pickupWindow ||
+            "Flexible",
+
+
+        /* NGO address */
+
+        address:
+
+            (ngoProfile &&
+             ngoProfile.address)
+
+                ? ngoProfile.address
+
+                : "NGO Address",
+
+
+        /* Number of people */
+
+        peopleCount:
+            Number(quantity),
+
+
+        /* Urgency */
+
+        urgency:
+
+            selectedUrgency
+                .charAt(0)
+                .toUpperCase() +
+
+            selectedUrgency
+                .slice(1),
+
+
+        /* Notes */
+
+        notes:
+            notes,
+
+
+        /* Status */
+
+        status:
+            "Pending"
+
+    };
+
+
+    console.log(
+        "Food Request:",
+        foodRequest
+    );
+
+
+
+    /* =================================================
+       BUTTON LOADING
+    ================================================= */
+
+    const btn =
+        document.getElementById(
+            "foodRequestBtn"
+        );
+
+
+    btn.disabled = true;
+
+
+    btn.textContent =
+        "🔎 Sending request...";
+
+
+
+    /* =================================================
+       SEND DATA TO NODE.JS + MONGODB
+    ================================================= */
+
+    try {
+
+
+        const response =
+            await fetch(
+                "http://localhost:5000/api/food-requests",
+                {
+
+                    method: "POST",
+
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+
+                    body:
+                        JSON.stringify(
+                            foodRequest
+                        )
+
+                }
+            );
+
+
+
+        /* Convert response to JSON */
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Backend Response:",
+            data
+        );
+
+
+
+        /* =================================================
+           SUCCESS
+        ================================================= */
+
+        if (
+            response.ok &&
+            data.success
+        ) {
+
+
+            /* Save MongoDB response */
+
+            localStorage.setItem(
+                "ngoFoodRequest",
+                JSON.stringify(
+                    data.request
+                )
+            );
+
+
+            /* Success message */
+
+            alert(
+                "Food request saved successfully! Finding matching donors..."
+            );
+
+
+            btn.textContent =
+                "✅ Request Saved";
+
+
+            /* =================================================
+               GO TO CONFIRMATION PAGE
+            ================================================= */
+
+            setTimeout(
+                function () {
+
+                    // Send the NGO to the real AI Matching
+                    // engine (06-ai-matching.html) instead of
+                    // straight to a static confirmation screen,
+                    // so an actual donor gets matched.
+                    window.location.href =
+                        "06-ai-matching.html";
+
+                },
+                800
+            );
+
+
+        }
+
+        else {
+
+
+            throw new Error(
+                data.message ||
+                "Failed to save food request"
+            );
+
+        }
+
+
+    }
+
+    /* =================================================
+       CONNECTION ERROR
+    ================================================= */
+
+    catch (error) {
+
+
+        console.error(
+            "Food Request Error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to RescueAI server.\n\n" +
+            "Please make sure the backend is running on port 5000."
+        );
+
+
+        /* Enable button again */
+
+        btn.disabled = false;
+
+
+        btn.textContent =
+            "Find Matching Donors 🔍";
+
+    }
+
+}
+
+</script>
+
+
+</body>
+</html>
